@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Share+Tech+Mono&display=swap');
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body {
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    font-family:'Orbitron',sans-serif;
+  }
+  .wrap {
+    position:relative;
+    width:600px;
+    padding:48px 32px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+  }
+  /* Scan lines overlay */
+  .wrap::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,0,0,0.025) 3px,
+      rgba(255,0,0,0.025) 4px
+    );
+    pointer-events:none;
+    z-index:10;
+  }
+
+  /* HUD corner brackets */
+  .bracket {
+    position:absolute;
+    width:24px;height:24px;
+    border-color:#ff0000;
+    border-style:solid;
+    opacity:0.6;
+  }
+  .bracket.tl { top:12px;left:12px;border-width:2px 0 0 2px; }
+  .bracket.tr { top:12px;right:12px;border-width:2px 2px 0 0; }
+  .bracket.bl { bottom:12px;left:12px;border-width:0 0 2px 2px; }
+  .bracket.br { bottom:12px;right:12px;border-width:0 2px 2px 0; }
+
+  /* Top line decorations */
+  .top-deco {
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .line-seg {
+    flex:1;
+    height:1px;
+    background:linear-gradient(90deg, transparent, #ff0000, #ff4400, transparent);
+    opacity:0.7;
+  }
+  .hex {
+    font-family:'Share Tech Mono',monospace;
+    font-size:9px;
+    color:#ff4400;
+    opacity:0.6;
+    letter-spacing:1px;
+  }
+
+  /* DEATH */
+  .death-wrap {
+    position:relative;
+    width:100%;
+    text-align:center;
+  }
+  .death {
+    font-size:clamp(72px,14vw,112px);
+    font-weight:900;
+    letter-spacing:0.12em;
+    color:transparent;
+    -webkit-text-stroke:1.5px #ff1a00;
+    text-shadow:
+      0 0 8px #ff0000,
+      0 0 20px #cc0000,
+      0 0 40px #880000,
+      4px 4px 0 #1a0000,
+      8px 8px 0 #0d0000;
+    line-height:1;
+    position:relative;
+    z-index:2;
+    animation:flicker 6s infinite;
+  }
+  .death-bg {
+    position:absolute;
+    inset:0;
+    font-size:clamp(72px,14vw,112px);
+    font-weight:900;
+    letter-spacing:0.12em;
+    color:#ff0000;
+    opacity:0.08;
+    font-family:'Orbitron',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    filter:blur(8px);
+    z-index:1;
+    line-height:1;
+    padding-bottom:4px;
+  }
+
+  /* Middle divider */
+  .divider {
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:2px 0;
+  }
+  .div-line { flex:1;height:1px;background:#ff0000;opacity:0.4; }
+  .div-diamond {
+    width:6px;height:6px;
+    background:#ff0000;
+    transform:rotate(45deg);
+    opacity:0.9;
+  }
+  .div-center {
+    font-family:'Share Tech Mono',monospace;
+    font-size:8px;
+    color:#ff3300;
+    letter-spacing:3px;
+    opacity:0.7;
+  }
+
+  /* RAY */
+  .ray-wrap {
+    position:relative;
+    width:100%;
+    text-align:center;
+  }
+  .ray {
+    font-size:clamp(56px,11vw,88px);
+    font-weight:900;
+    letter-spacing:0.55em;
+    color:#ff1a00;
+    text-shadow:
+      0 0 6px #ff0000,
+      0 0 18px #ff2200,
+      0 0 36px #aa0000,
+      0 2px 0 #cc0000,
+      3px 3px 0 #330000;
+    line-height:1;
+    padding-left:0.55em;
+    animation:rayflicker 8s infinite;
+    position:relative;
+    z-index:2;
+  }
+  /* Glitch clip effect on RAY */
+  .ray::before {
+    content:'RAY';
+    position:absolute;
+    left:0.55em;top:0;
+    color:#00ffff;
+    opacity:0.12;
+    clip-path:inset(30% 0 50% 0);
+    transform:translateX(-3px);
+    animation:glitch1 4s infinite;
+  }
+  .ray::after {
+    content:'RAY';
+    position:absolute;
+    left:0.55em;top:0;
+    color:#ff00ff;
+    opacity:0.08;
+    clip-path:inset(60% 0 10% 0);
+    transform:translateX(3px);
+    animation:glitch2 5s infinite;
+  }
+
+  /* Bottom deco */
+  .bot-deco {
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:14px;
+  }
+  .status-dot {
+    width:5px;height:5px;border-radius:50%;
+    background:#ff0000;
+    animation:pulse-dot 2s infinite;
+  }
+  .status-text {
+    font-family:'Share Tech Mono',monospace;
+    font-size:8px;
+    color:#ff3300;
+    letter-spacing:2px;
+    opacity:0.55;
+    flex:1;
+  }
+
+  /* Energy beam under RAY */
+  .beam {
+    width:70%;
+    height:2px;
+    background:linear-gradient(90deg, transparent, #ff0000 20%, #ff4400 50%, #ff0000 80%, transparent);
+    margin-top:6px;
+    animation:beam-pulse 3s ease-in-out infinite;
+    border-radius:1px;
+    position:relative;
+  }
+  .beam::after {
+    content:'';
+    position:absolute;
+    inset:-2px;
+    background:inherit;
+    filter:blur(4px);
+    opacity:0.5;
+  }
+
+  /* Animated particles */
+  .particles {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:0;
+  }
+  .particle {
+    position:absolute;
+    width:2px;height:2px;
+    background:#ff0000;
+    border-radius:50%;
+    opacity:0;
+  }
+
+  @keyframes flicker {
+    0%,95%,100%{opacity:1}
+    96%{opacity:0.85}
+    97%{opacity:1}
+    98%{opacity:0.7}
+    99%{opacity:1}
+  }
+  @keyframes rayflicker {
+    0%,92%,100%{opacity:1}
+    93%{opacity:0.8}
+    94%{opacity:1}
+    98%{opacity:0.9}
+  }
+  @keyframes glitch1 {
+    0%,89%,100%{clip-path:inset(30% 0 50% 0);transform:translateX(-3px)}
+    90%{clip-path:inset(10% 0 70% 0);transform:translateX(4px)}
+    91%{clip-path:inset(50% 0 20% 0);transform:translateX(-2px)}
+    92%{clip-path:inset(30% 0 50% 0);transform:translateX(-3px)}
+  }
+  @keyframes glitch2 {
+    0%,85%,100%{clip-path:inset(60% 0 10% 0);transform:translateX(3px)}
+    86%{clip-path:inset(20% 0 60% 0);transform:translateX(-5px)}
+    87%{clip-path:inset(70% 0 5% 0);transform:translateX(2px)}
+    88%{clip-path:inset(60% 0 10% 0);transform:translateX(3px)}
+  }
+  @keyframes pulse-dot {
+    0%,100%{opacity:1;box-shadow:0 0 4px #ff0000}
+    50%{opacity:0.3;box-shadow:none}
+  }
+  @keyframes beam-pulse {
+    0%,100%{opacity:0.5;transform:scaleX(0.9)}
+    50%{opacity:1;transform:scaleX(1)}
+  }
+  @keyframes float-up {
+    0%{opacity:0;transform:translateY(0)}
+    20%{opacity:0.8}
+    100%{opacity:0;transform:translateY(-80px)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bracket tl"></div>
+  <div class="bracket tr"></div>
+  <div class="bracket bl"></div>
+  <div class="bracket br"></div>
+
+  <div class="particles" id="ptcl"></div>
+
+  <div class="top-deco">
+    <div class="line-seg"></div>
+    <span class="hex">SYS::ARMED</span>
+    <div class="line-seg"></div>
+  </div>
+
+  <div class="death-wrap">
+    <div class="death-bg">DEATH</div>
+    <div class="death">DEATH</div>
+  </div>
+
+  <div class="divider">
+    <div class="div-line"></div>
+    <div class="div-diamond"></div>
+    <div class="div-center">— MODEL XR-9 —</div>
+    <div class="div-diamond"></div>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="ray-wrap">
+    <div class="ray">RAY</div>
+  </div>
+
+  <div class="beam"></div>
+
+  <div class="bot-deco">
+    <div class="line-seg" style="flex:unset;width:60px;background:linear-gradient(90deg,transparent,#ff0000);opacity:0.4"></div>
+    <div class="status-dot"></div>
+    <span class="status-text">TARGETING • ONLINE</span>
+    <div class="status-dot"></div>
+    <div class="line-seg" style="flex:unset;width:60px;background:linear-gradient(270deg,transparent,#ff0000);opacity:0.4"></div>
+  </div>
+</div>
+
+<script>
+const c = document.getElementById('ptcl');
+for(let i=0;i<18;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  const x=10+Math.random()*80;
+  const delay=Math.random()*5;
+  const dur=2+Math.random()*3;
+  p.style.cssText=`left:${x}%;bottom:${10+Math.random()*60}%;animation:float-up ${dur}s ${delay}s ease-in infinite;width:${Math.random()<0.3?3:2}px;height:${Math.random()<0.3?3:2}px;`;
+  c.appendChild(p);
+}
+</script>
+</body>
+</html>
